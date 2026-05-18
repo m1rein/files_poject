@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Файловы1 проводник</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        .file-icon-img {
+    width: 48px;
+    height: 48px;
+    display: block;
+    margin: 0 auto 8px auto;
+    object-fit: contain;  
+        } 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background:black;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .theme-toggle {
+            cursor: pointer;
+            font-size: 20px;
+            margin-left: 10px;
+        }
+   
+        body.light-theme {
+            background: white;
+        }
+
+        body.dark-theme {
+        backgound: black;
+        }
+        .window {
+            max-width: 500px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .window-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .window-title {
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .sort-icons {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .sort-icon {
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0.8;
+        }
+        
+        .sort-icon:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        
+        .file-list {
+            min-height: 350px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 15px;
+            background: #fafafa;
+        }
+        
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 15px;
+        }
+        
+        .file-card {
+            background: white;
+            border-radius: 12px;
+            padding: 12px 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #eee;
+        }
+        
+        .file-card:hover {
+            background: #f0f0f0;
+            transform: translateY(-3px);
+            border-color: #667eea;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+        }
+        
+        .file-card.new {
+            animation: highlightNew 0.5s ease;
+        }
+        
+        @keyframes highlightNew {
+            0% {
+                background: #ff4444;
+            }
+            50% {
+                background: #ff8888;
+            }
+            100% {
+                background: white;
+            }
+        }
+        .file-icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .file-name {
+            font-size: 11px;
+            color: #333;
+            word-break: break-all;
+            line-height: 1.3;
+        }
+        
+        .window-footer {
+            padding: 12px 20px;
+            background: white;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .plus-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+        
+        .plus-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            width: 350px;
+            max-width: 90%;
+            animation: modalFade 0.2s ease;
+        }
+        
+        @keyframes modalFade {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .modal-content h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .modal-content input, .modal-content textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        
+        .modal-content input:focus, .modal-content textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        
+        .modal-buttons button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .btn-confirm {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-cancel {
+            background: #ccc;
+            color: #333;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            z-index: 1100;
+            font-size: 14px;
+            animation: toastFade 0.3s ease;
+        }
+        
+        @keyframes toastFade {
+            from {
+                opacity: 0;
+                bottom: 0;
+            }
+            to {
+                opacity: 1;
+                bottom: 20px;
+            }
+        }
+        
+        .toast.error {
+            background: #f44336;
+        }
+        
+        .file-list::-webkit-scrollbar {
+            width: 5px;
+        }
+        
+        .file-list::-webkit-scrollbar-track {
+            background: #e0e0e0;
+            border-radius: 10px;
+        }
+        
+        .file-list::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+        
+        .context-menu {
+            display: none;
+            position: fixed;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 1002;
+            min-width: 150px;
+            overflow: hidden;
+        }
+        
+        .context-menu button {
+            display: block;
+            width: 100%;
+            padding: 10px 15px;
+            border: none;
+            background: white;
+            text-align: left;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .context-menu button:hover {
+            background: #f0f0f0;
+        }
+        
+        pre {
+            max-height: 300px;
+            overflow: auto;
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="window">
+        <div class="window-header">
+            <span class="window-title">путеводитель</span>
+            <div class="sort-icons">
+                <span class="sort-icon" onclick="sortirovka('asc')">^</span>
+                <span class="sort-icon" onclick="sortirovka('desc')">V</span>
+                <span class="sort-icon" onclick="zagruzitFajly()">обновить</span>
+            </div>
+        </div>
+        
+        <div class="file-list" id="spisokFajlov"></div>
+        
+        <div class="window-footer">
+             <button class="plus-btn" onclick="perekluchitTemu()">-</button>
+            <button class="plus-btn" onclick="pokazatModalSozdaniya()">+</button>
+        </div>
+    </div>
+    
+    <div id="sozdanieModal" class="modal">
+        <div class="modal-content">
+            <h3>+ Создать</h3>
+            <input type="text" id="imyaFajla" placeholder="название" required>
+            <textarea id="soderzhimoe" rows="4" placeholder="что внутри"></textarea>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="zakrytSozdanieModal()">Отмена</button>
+                <button class="btn-confirm" onclick="sozdatFajl()">Начать существование</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="prosmotrModal" class="modal">
+        <div class="modal-content">
+            <h3 id="zagolovokModala"> Файл</h3>
+            <pre id="tekstFajla"></pre>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="zakrytProsmotrModal()">Закрыть</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="renameModal" class="modal">
+        <div class="modal-content">
+            <h3>Переименовать</h3>
+            <input type="text" id="novoeImya" placeholder="Новое погоняло">
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="zakrytRenameModal()">Отмена</button>
+                <button class="btn-confirm" onclick="podtverditRename()">Переименовать</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    let fajlDlyaRename = null;
+    
+    function pokazatToast(soobshchenie, etoOshibka = false) {
+        let toast = document.createElement('div');
+        toast.className = 'toast' + (etoOshibka ? ' error' : '');
+        toast.textContent = soobshchenie;
+        document.body.appendChild(toast);
+        setTimeout(function() { toast.remove(); }, 2500);
+    }
+    
+    async function zagruzitFajly() {
+        try {
+            let otvet = await fetch('/get_files');
+            let dannye = await otvet.json();
+            await otrisovatFajly(dannye.files);
+        } catch(oshibka) {
+            pokazatToast('Ошибка загрузки', true);
+        }
+    }
+    
+    function poluchitIkonku(imya) {
+        return '<img src="/static/image.png" class="file-icon-img" alt="иконка">';
+    }
+    
+    async function otrisovatFajly(spisok) {
+        let kontejner = document.getElementById('spisokFajlov');
+        
+        if (!spisok || spisok.length === 0) {
+            kontejner.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon">📂</div>
+                    <p>Нет файлов</p>
+                    <p style="font-size: 12px;">Нажмите + чтобы создать</p>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '<div class="file-grid">';
+        for (let i = 0; i < spisok.length; i++) {
+            let f = spisok[i];
+            let razmer = await pokazatRazmer(f);
+            html += `
+                <div class="file-card" data-filename="${f}" 
+                     ondblclick="otkrytFajl('${f}')" 
+                     oncontextmenu="pokazatMenu(event, '${f}')">
+                    <span class="file-icon">${poluchitIkonku(f)}</span>
+                    <div class="file-name">${f}</div>
+                    <div class="file-size" style="font-size: 9px; color: #888; margin-top: 5px;">${razmer}</div>
+                </div>
+            `;
+        }
+        html += '</div>';
+        kontejner.innerHTML = html;
+    }
+    
+    function perekluchitTemu() {
+        if (document.body.className === 'light-theme') {
+            document.body.className = 'dark-theme';
+        } else {
+            document.body.className = 'light-theme';
+        }
+    }
+    
+    function pokazatModalSozdaniya() {
+        document.getElementById('imyaFajla').value = '';
+        document.getElementById('soderzhimoe').value = '';
+        document.getElementById('sozdanieModal').style.display = 'flex';
+    }
+    
+    function zakrytSozdanieModal() {
+        document.getElementById('sozdanieModal').style.display = 'none';
+    }
+    
+    async function sozdatFajl() {
+        let imya = document.getElementById('imyaFajla').value;
+        let tekst = document.getElementById('soderzhimoe').value;
+        
+        if (!imya) {
+            pokazatToast('Введите имя', true);
+            return;
+        }
+        
+        try {
+            let otvet = await fetch('/create_file', 
+            {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({filename: imya, content: tekst})
+            });
+            
+            let dannye = await otvet.json();
+            
+            if (dannye.status === 'success') {
+                pokazatToast(dannye.message);
+                zakrytSozdanieModal();
+                await zagruzitFajly();
+                
+                let novayaKarta = document.querySelector(`.file-card[data-filename="${dannye.filename}"]`);
+                if (novayaKarta) {
+                    novayaKarta.classList.add('new');
+                    setTimeout(function() { novayaKarta.classList.remove('new'); }, 2000);
+                }
+            } else {
+                pokazatToast(dannye.message, true);
+            }
+        } catch(oshibka) {
+            pokazatToast('Ошибка', true);
+        }
+    }
+    async function otkrytFajl(imya) {
+        try {
+            let otvet = await fetch('/open_file', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({filename: imya})
+            });
+            
+            let dannye = await otvet.json();
+            
+            if (dannye.status === 'success') {
+                document.getElementById('zagolovokModala').innerHTML = `📁 ${dannye.filename}`;
+                document.getElementById('tekstFajla').textContent = dannye.content;
+                document.getElementById('prosmotrModal').style.display = 'flex';
+            } else {
+                pokazatToast(dannye.message, true);
+            }
+        } catch(oshibka) {
+            pokazatToast('Ошибка открытия', true);
+        }
+    }
+    function zakrytProsmotrModal() {
+        document.getElementById('prosmotrModal').style.display = 'none';
+    }
+    async function pokazatRazmer(imya) {
+        try {
+            let otvet = await fetch('/file_size', 
+            {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({filename: imya})
+            });
+            let dannye = await otvet.json();
+            return dannye.size;
+        } catch(e) {
+            return '? B';
+        }
+    }
+    async function udalitFajl(imya) {
+        if (!confirm(`Удалить "${imya}"?`)) return;
+        
+        try {
+            let otvet = await fetch('/delete_file', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({filename: imya})
+            });
+            
+            let dannye = await otvet.json();
+            
+            if (dannye.status === 'success') {
+                pokazatToast(dannye.message);
+                await zagruzitFajly();
+            } else {
+                pokazatToast(dannye.message, true);
+            }
+        } catch(oshibka) {
+            pokazatToast('Ошибка удаления', true);
+        }
+    }
+    function pokazatRenameModal(imya) 
+    {
+        fajlDlyaRename = imya;
+        document.getElementById('novoeImya').value = imya.replace('.txt', '');
+        document.getElementById('renameModal').style.display = 'flex';
+    }
+    
+    function zakrytRenameModal() 
+    {
+        document.getElementById('renameModal').style.display = 'none';
+        fajlDlyaRename = null;
+    }
+    async function podtverditRename()
+     {
+        let novoe = document.getElementById('novoeImya').value;
+        if (!novoe || novoe === fajlDlyaRename.replace('.txt', '')) {
+            zakrytRenameModal();
+            return;
+        }
+        
+        try {
+            let otvet = await fetch('/rename_file', 
+            {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({old_name: fajlDlyaRename, new_name: novoe})
+            });
+            
+            let dannye = await otvet.json();
+            
+            if (dannye.status === 'success') {
+                pokazatToast(dannye.message);
+                zakrytRenameModal();
+                await zagruzitFajly();
+            } else {
+                pokazatToast(dannye.message, true);
+            }
+        } catch(oshibka)
+         {
+            pokazatToast('Ошибка переименования', true);
+        }
+    }
+    
+    async function sortirovka(poryadok) {
+        let adres = poryadok === 'asc' ? '/sorted' : '/back_sort';
+        try {
+            let otvet = await fetch(adres, {method: 'POST'});
+            let dannye = await otvet.json();
+            if (dannye.files) {
+                await otrisovatFajly(dannye.files);
+                let tekst = poryadok === 'asc' ? 'А-Я' : 'Я-А';
+                pokazatToast(`Сортировка ${tekst}`);
+            }
+        } catch(oshibka) {
+            pokazatToast('Ошибка сортировки', true);
+        }
+    }
+    
+    function pokazatMenu(sobytie, imya) {
+        sobytie.preventDefault();
+        
+        let menu = document.getElementById('contextMenu');
+        if (!menu) 
+        {
+            menu = document.createElement('div');
+            menu.id = 'contextMenu';
+            menu.className = 'context-menu';
+            menu.innerHTML = `
+                <button onclick="otkrytFajl(vybrannyy); spryatatMenu()"> Открыть</button>
+                <button onclick="pokazatRenameModal(vybrannyy); spryatatMenu()"> Переименовать</button>
+                <button onclick="udalitFajl(vybrannyy); spryatatMenu()"> Удалить</button>
+            `;
+            document.body.appendChild(menu);
+        }
+        
+        window.vybrannyy = imya;
+        menu.style.display = 'block';
+        menu.style.left = sobytie.pageX + 'px';
+        menu.style.top = sobytie.pageY + 'px';
+        
+        setTimeout(function() {
+            document.addEventListener('click', spryatatMenu);
+        }, 100);
+    }
+    
+    function spryatatMenu() {
+        let menu = document.getElementById('contextMenu');
+        if (menu) menu.style.display = 'none';
+        document.removeEventListener('click', spryatatMenu);
+    }
+    
+    window.onclick = function(sobytie) {
+        let modals = document.querySelectorAll('.modal');
+        for (let i = 0; i < modals.length; i++) 
+        {
+            if (sobytie.target === modals[i]) {
+                modals[i].style.display = 'none';
+            }
+        }
+    }
+    
+    zagruzitFajly();
+</script>
+</body>
+</html>
