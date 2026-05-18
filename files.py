@@ -1,16 +1,20 @@
 import os
 from pathlib import Path
 
-def vse_fajly_iz_papki(gde_iskat='.'):
+def vse_fajly_iz_papki(gde_iskat=None):
+    if gde_iskat is None:
+        if os.path.exists('C:\\'):
+            gde_iskat = 'C:\\'
+        else:
+            gde_iskat = 'D:\\'
     rezultat = []
     for chto in os.listdir(gde_iskat):
         if os.path.isfile(os.path.join(gde_iskat, chto)):
             rezultat.append(chto)
     rezultat.sort()
     return rezultat
-
 def poluchit_ikonku(imya):
-    return '📁'
+    return '+'
 def razmer_fajla(imya):
     if os.path.exists(imya):
         razmer = os.path.getsize(imya)
